@@ -1,0 +1,5 @@
+const keys = {
+  token: 'eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiI4ZDY5YzZiNjgyNWY5MDhkZjkzN2MzNTM4OWJjZjVlZiIsInN1YiI6IjU2YzU0MjA5OTI1MTQxMjQ1ODAwMTc0YyIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.MpkCnLu4eQXNPgcIX-dBUk-HuhtDzDnStYllj9ExLfM'
+}
+
+export default keys;
