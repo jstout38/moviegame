@@ -31,7 +31,9 @@ export default function MovieGame() {
 
   const [ movieInput, setMovieInput ] = useState<string>("");
 
-  const [ searchResponse, setSearchResponse ] = useState<[{title: string, release_date: string}]>([{title: '', release_date: ''}]);
+  const [ searchResponse, setSearchResponse ] = useState<{title: string, release_date: string}[]>([{title: '', release_date: ''}]);
+
+  const [ showResults, setShowResults ] = useState(false);
 
   const search_options = (movie: string) => {
     return {
@@ -53,6 +55,7 @@ export default function MovieGame() {
       const response = await axios.request(search_options(movieInput));
       try {
         setSearchResponse(response.data.results);
+        setShowResults(true);
       } catch (error) {
         console.error(error);
       }
@@ -80,11 +83,11 @@ export default function MovieGame() {
     })();
   }, []);
 
-  return (
-    <div>
+  return (    
+    <div className="flex flex-col w-3/4 lg:w-1/4">
       {currentMovie.title}
-      <input type="text" value={movieInput} onChange={handleSearch}></input>
-      <SearchResults results={searchResponse} />
+      <input className="w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)}></input>
+      {showResults ? <SearchResults results={searchResponse.slice(0,15)} /> : <div></div>}
     </div>
   )
 }
