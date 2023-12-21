@@ -27,13 +27,15 @@ const auth_options = {
 
 export default function MovieGame() {
 
-  const [ currentMovie, setCurrentMovie ] = useState<{title: string}>({title: ''});
+  const [ currentMovie, setCurrentMovie ] = useState<{title: string, id: number}>({title: '', id: 0});
 
   const [ movieInput, setMovieInput ] = useState<string>("");
 
-  const [ searchResponse, setSearchResponse ] = useState<{title: string, release_date: string}[]>([{title: '', release_date: ''}]);
+  const [ searchResponse, setSearchResponse ] = useState<{title: string, release_date: string, id: number}[]>([{title: '', release_date: '', id: 0}]);
 
   const [ showResults, setShowResults ] = useState(false);
+
+  const [ lastAnswer, setLastAnswer ] = useState(0);
 
   const search_options = (movie: string) => {
     return {
@@ -75,7 +77,7 @@ export default function MovieGame() {
     (async () => {
       const response = await axios.request(options);
       try {
-        console.log(response.data);
+        console.log(response.data.results[randomResult]);
         setCurrentMovie(response.data.results[randomResult])
       } catch (error) {
         console.error(error);
@@ -83,11 +85,22 @@ export default function MovieGame() {
     })();
   }, []);
 
+  useEffect(() => {
+    console.log(lastAnswer);
+    if (lastAnswer !== 0) {
+      if (lastAnswer === currentMovie.id) {
+        console.log('Correct!');
+      } else {
+        console.log('Incorrect!')
+      }
+    }
+  }, [lastAnswer])
+
   return (    
     <div className="flex flex-col w-3/4 lg:w-1/4">
       {currentMovie.title}
-      <input className="w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)}></input>
-      {showResults ? <SearchResults results={searchResponse.slice(0,15)} /> : <div></div>}
+      <input className="w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
+      {showResults ? <SearchResults  setLastAnswer={setLastAnswer} results={searchResponse.slice(0,15)} /> : <div></div>}
     </div>
   )
 }
