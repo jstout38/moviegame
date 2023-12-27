@@ -1,8 +1,9 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import keys from './config/keys';
 import SearchResults from './searchResults';
+import CastMember from './castMember';
 
 var randomPage = Math.ceil(Math.random() * 20);
 var randomResult = Math.floor(Math.random() * 20);
@@ -25,6 +26,7 @@ const auth_options = {
     }
   };
 
+  
 export default function MovieGame() {
 
   const [ currentMovie, setCurrentMovie ] = useState<{title: string, id: number}>({title: '', id: 0});
@@ -37,6 +39,10 @@ export default function MovieGame() {
 
   const [ lastAnswer, setLastAnswer ] = useState(0);
 
+  const [ cast, setCast ] = useState<[] | {name: string, id: number, found: boolean}[]>([]);
+
+  var castList : React.JSX.Element[] = [];
+
   const search_options = (movie: string) => {
     return {
       method: 'GET',
@@ -47,6 +53,18 @@ export default function MovieGame() {
       }
     }
   };
+
+  const movie_options = (id: number) => {
+    return {
+      method: 'GET',
+      url: 'https://api.themoviedb.org/3/movie/' + id.toString() + '/credits?language=en-US',
+      headers: {
+      accept: 'application/json',
+      Authorization: 'Bearer ' + keys.token,
+      }
+    }
+  }
+
 
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setMovieInput(e.target.value);    
@@ -82,17 +100,38 @@ export default function MovieGame() {
       } catch (error) {
         console.error(error);
       }
+      const movie_response = await axios.request(movie_options(response.data.results[randomResult].id));
+      setCast(movie_response.data.cast.map((actor: {name: string, id: number}) => {
+        return {
+          name: actor.name,
+          found: false,
+          id: actor.id,
+        }
+      }));
     })();
   }, []);
 
   useEffect(() => {
-    console.log(lastAnswer);
+
+  }, [cast])
+
+  useEffect(() => {
     if (lastAnswer !== 0) {
-      if (lastAnswer === currentMovie.id) {
-        console.log('Correct!');
-      } else {
-        console.log('Incorrect!')
-      }
+      (async () => {
+        var cast_response = (await axios.request(movie_options(lastAnswer))).data.cast;
+        for (var i = 0; i < cast_response.length; i++) {
+          const actorID = cast_response[i].id;
+          for (var j = 0; j < cast.length; j++) {
+            if (actorID === cast[j].id) {
+              setCast(
+                cast.map((castMember) => {
+                  return actorID === castMember.id ? {name: castMember.name, id: castMember.id, found: true} : castMember;
+                })
+              );
+            }
+          }
+        }
+      })();
     }
   }, [lastAnswer])
 
@@ -101,6 +140,9 @@ export default function MovieGame() {
       {currentMovie.title}
       <input className="w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
       {showResults ? <SearchResults  setLastAnswer={setLastAnswer} results={searchResponse.slice(0,15)} /> : <div></div>}
+      {cast.map((castMember: {name: string, id: number, found: boolean}) => {
+      return <CastMember key={castMember.id} name={castMember.name} found={castMember.found}></CastMember>
+    })}
     </div>
   )
 }
