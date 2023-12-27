@@ -12,7 +12,6 @@ export default function SearchResults(props: resultsProps) {
     }
 
     var setAnswer = function(id: number) {
-      console.log('test');
       props.setLastAnswer(id);
     }
 
@@ -21,11 +20,11 @@ export default function SearchResults(props: resultsProps) {
         if (result.release_date.length > 0) {
           title += ' (' + result.release_date.slice(0,4) + ')';
         }
-        return <div className="bg-white border-solid border border-black hover:bg-blue-600 hover:text-white p-2" onMouseDown={() => setAnswer(result.id)} key={result.id}>{title}</div>
+        return <div className="text-black bg-white border-solid border border-black hover:bg-blue-600 hover:text-white p-2" onMouseDown={() => setAnswer(result.id)} key={result.id}>{title}</div>
       });
 
     return (
-      <div>
+      <div className="">
         {resultList}
       </div>
     )
