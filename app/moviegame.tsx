@@ -1,5 +1,5 @@
 "use client"
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import SearchResults from './searchResults';
 import CastMember from './castMember';
@@ -145,9 +145,14 @@ export default function MovieGame() {
         setGameState({...gameState, gameWon: true});
         setCurrentMovie({...currentMovie, cast: currentMovie.cast.map((castMember) => {
           return {...castMember, found: true}
-        })})
+        })});
+        inputContainer.current!.hidden = true;        
       } else {
         setGameState({...gameState, score: gameState.score - 100});
+        if (gameState.score <= 100) {
+          inputContainer.current!.hidden = true;
+
+        }
         (async () => {
         var cast_response = (await axios.request(movie_options(lastAnswer))).data.cast;
         var tempCast = currentMovie.cast;
@@ -170,16 +175,20 @@ export default function MovieGame() {
       })();
     }
     }
-  }, [lastAnswer])
+  }, [lastAnswer]);
+
+  const inputContainer = useRef<HTMLInputElement>(null);
 
   return (    
+    <div>
     <div className="w-full grid md:grid-cols-2 grid-cols-1">
       <div className="grid grid-rows-12">      
         <div className="row-span-1">
-        {gameState.gameWon ? <h1>You Won: Final Score - {gameState.score}</h1> : <h1>Current Score: {gameState.score}</h1>}
-        </div>
+          {gameState.gameWon ? <h1>You Won: Final Score - {gameState.score}</h1> : <h1>Current Score: {gameState.score}</h1>}
+          {gameState.score <= 0 ? <h1>You lost. The correct title was {currentMovie.title}. Try again!</h1> : <h1></h1>}
+          <input ref={inputContainer} className="text-black w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
+        </div>    
         <div className="gameContainer">
-          <input className="text-black w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
           <div className="grid grid-rows-2">
           <div className="row-span-2 row-start-1 col-start-1">
                 {currentMovie.cast.map((castMember: {name: string, id: number, found: boolean}) => {
@@ -228,8 +237,9 @@ export default function MovieGame() {
           <button className="bg-white text-black" onClick={() => handleHint('description')}>Description -500 Points</button>          
         }
       </div>      
-    </div>
-    </div>
+    </div>    
+    </div>    
+</div>
   )
 }
 
