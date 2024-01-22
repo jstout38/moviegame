@@ -140,6 +140,7 @@ export default function MovieGame() {
   }, [currentMovie])
 
   useEffect(() => {
+    setMovieInput("");
     if (lastAnswer !== 0) {
       if (lastAnswer === currentMovie.id) {
         setGameState({...gameState, gameWon: true});
