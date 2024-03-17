@@ -5,6 +5,7 @@ import SearchResults from './searchResults';
 import CastMember from './castMember';
 import {options, auth_options, movie_options, search_options, detail_options } from './config/axios_options';
 
+//Generate a random number for getting a random result
 var randomResult = Math.floor(Math.random() * 20);
 
 type currentMovieType = {
@@ -28,6 +29,7 @@ type gameStateType = {
  
 export default function MovieGame() {
 
+  //Create state for the current movie being guessed
   const [ currentMovie, setCurrentMovie ] = useState<currentMovieType>(
     {
       title: '', 
@@ -40,6 +42,7 @@ export default function MovieGame() {
     }
   );
 
+  //Helper function for showing hints and updating score
   const handleHint = (hint: 'year'| 'description' | 'tagline' | 'genres') => {
     switch(hint) {
       case 'year':
@@ -56,11 +59,13 @@ export default function MovieGame() {
     }
   }
 
+  //create state for the current movie input, the current search response, and the last answer
   const [ movieInput, setMovieInput ] = useState<string>("");
   const [ searchResponse, setSearchResponse ] = useState<{title: string, release_date: string, id: number}[]>([{title: '', release_date: '', id: 0}]);
   const [ showResults, setShowResults ] = useState(false);
   const [ lastAnswer, setLastAnswer ] = useState(0);
   
+  //create state for game settings, current score, whether the game has been won, and currently shown hints
   const [ gameState, setGameState ] = useState<gameStateType>({
     score: 1500, 
     gameWon: false,
@@ -70,10 +75,12 @@ export default function MovieGame() {
     hint_genres: false,
   });  
 
+  //Whenever the search box changes, update the movie input state to the current contents of the search box
   const handleSearch = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setMovieInput(e.target.value);    
   }
   
+  //Whenver the movie input state changes, call the API and update search results
   useEffect(() => {
     (async () => {
       const response = await axios.request(search_options(movieInput));
@@ -86,6 +93,7 @@ export default function MovieGame() {
     })();
   }, [movieInput])
 
+  //Initial useEffect call, authorizes api, gets the movie info using our random number generated above, updates the current movie to the result
   useEffect(() => {
     (async () => {
       const response = await axios.request(auth_options);
@@ -135,15 +143,18 @@ export default function MovieGame() {
     })();
   }, []);
 
-  useEffect(() => {
-    console.log(currentMovie);
-  }, [currentMovie])
-
+  //When last answer changes, if last answer matches current movie, game won, else check for shared cast members
   useEffect(() => {
     setMovieInput("");
     if (lastAnswer !== 0) {
       if (lastAnswer === currentMovie.id) {
-        setGameState({...gameState, gameWon: true});
+        setGameState({...gameState, 
+          hint_year: true,
+          hint_description: true,
+          hint_tagline: true,
+          hint_genres: true,
+          gameWon: true,
+        });
         setCurrentMovie({...currentMovie, cast: currentMovie.cast.map((castMember) => {
           return {...castMember, found: true}
         })});
@@ -183,27 +194,6 @@ export default function MovieGame() {
   return (    
     <div>
     <div className="w-full grid md:grid-cols-2 grid-cols-1">
-      <div className="grid grid-rows-12">      
-        <div className="row-span-1">
-          {gameState.gameWon ? <h1>You Won: Final Score - {gameState.score}</h1> : <h1>Current Score: {gameState.score}</h1>}
-          {gameState.score <= 0 ? <h1>You lost. The correct title was {currentMovie.title}. Try again!</h1> : <h1></h1>}
-          <input ref={inputContainer} className="text-black w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
-        </div>    
-        <div className="gameContainer">
-          <div className="grid grid-rows-2">
-          <div className="row-span-2 row-start-1 col-start-1">
-                {currentMovie.cast.map((castMember: {name: string, id: number, found: boolean}) => {
-                  return <CastMember key={castMember.id} name={castMember.name} found={castMember.found}></CastMember>
-                }
-                )}
-            </div>
-            <div className="row-span-2 row-start-1 col-start-1 searchResults">
-              {showResults ? <SearchResults  setLastAnswer={setLastAnswer} results={searchResponse.slice(0,15)} /> : <div></div>} 
-            </div>
-            
-          </div>
-        </div>      
-      </div>
     <div className="p-5">
       <h3>Welcome to the Movie Guessing Game</h3>
 
@@ -239,6 +229,28 @@ export default function MovieGame() {
         }
       </div>      
     </div>    
+      <div className="grid grid-rows-12">      
+        <div className="row-span-1">
+          {gameState.gameWon ? <h1>You Won: Final Score - {gameState.score} <button className="bg-white text-black" onClick={()=>window.location.reload()}>Play Again</button></h1> : <h1>Current Score: {gameState.score}</h1>}
+          {gameState.score <= 0 ? <h1>You lost. The correct title was {currentMovie.title}. Try again!</h1> : <h1></h1>}
+          <input ref={inputContainer} className="text-black w-full" type="text" value={movieInput} onChange={handleSearch} onBlur={()=>setShowResults(false)} onFocus={()=>setShowResults(true)}></input>
+        </div>    
+        <div className="gameContainer">
+          <div className="grid grid-rows-2">
+          <div className="row-span-2 row-start-1 col-start-1">
+                {currentMovie.cast.map((castMember: {name: string, id: number, found: boolean}) => {
+                  return <CastMember key={castMember.id} name={castMember.name} found={castMember.found}></CastMember>
+                }
+                )}
+            </div>
+            <div className="row-span-2 row-start-1 col-start-1 searchResults">
+              {showResults ? <SearchResults  setLastAnswer={setLastAnswer} results={searchResponse.slice(0,15)} /> : <div></div>} 
+            </div>
+            
+          </div>
+        </div>      
+      </div>
+    
     </div>    
 </div>
   )
